@@ -1,16 +1,13 @@
 import os
 import requests
-from telegram import Update, KeyboardButton, ReplyKeyboardMarkup
+from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
 
 COBALT_API = "https://api.cobalt.tools/api/json"
 
-# Asosiy menyuni yaratish
 def main_menu():
-    keyboard = [
-        ["📤 Video yuklash"]
-    ]
-    return Reply_keyboard_markup(keyboard, resize_keyboard=True, one_time_keyboard=False)
+    keyboard = [["📤 Video yuklash"]]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
@@ -20,14 +17,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
-    chat_id = update.effective_chat.id
-
-    # "Orqaga" yoki "Video yuklash" tugmasi bosilsa
-    if text in ["📤 Video yuklash", "🔙 Orqaga"]:
+    if text in ["📤 Video yuklash"]:
         await start(update, context)
         return
 
-    # URL tekshirish
     supported = ["tiktok.com", "instagram.com", "youtube.com", "youtu.be", "twitter.com", "x.com", "facebook.com", "reddit.com"]
     if not any(domain in text for domain in supported):
         await update.message.reply_text(
@@ -39,7 +32,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("⏳ Yuklanmoqda... Iltimos, kuting.")
 
     try:
-        # Cobalt API so'rovi
         resp = requests.post(
             COBALT_API,
             json={"url": text},
@@ -58,7 +50,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("📥 Yuklab olish uchun havola topilmadi.")
             return
 
-        # Javob turiga qarab yuborish
         media_type = data.get("type", "unknown")
         if media_type == "video":
             await update.message.reply_video(video=dl_url, supports_streaming=True)
@@ -74,7 +65,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(f"❌ Xatolik: {str(e)}")
 
-# Asosiy botni ishga tushirish
 if __name__ == "__main__":
     TOKEN = os.getenv("BOT_TOKEN")
     if not TOKEN:
